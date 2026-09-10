@@ -14,7 +14,7 @@ function SearchBar({
         placeholder="Search AI news..."
         value={searchTerm}
         onChange={(event) => setSearchTerm(event.target.value)}
-        className="input input-bordered h-12 w-full rounded-xl bg-base-100 pr-12 shadow-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        className="input input-bordered h-13 w-full rounded-xl border-base-300 bg-base-100 pr-12 shadow-sm transition placeholder:text-base-content/40 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15"
       />
 
       <div

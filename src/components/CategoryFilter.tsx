@@ -28,8 +28,8 @@ function CategoryFilter({
             onClick={() => setSelectedCategory(category)}
             className={`btn btn-sm rounded-full px-4 transition-all duration-200 ${
               isSelected
-                ? "btn-primary shadow-sm"
-                : "btn-ghost border border-base-300 bg-base-100 hover:border-primary/40 hover:bg-base-100"
+                ? "btn-primary shadow-md shadow-primary/20"
+                : "btn-ghost border border-base-300 bg-base-100 hover:border-primary/40 hover:bg-primary/5"
             }`}
           >
             {category}

@@ -7,7 +7,7 @@ function Footer() {
         </p>
 
         <p className="text-center font-medium text-base-content/60 md:text-right">
-          Stay curious. Stay updated. <span aria-hidden="true">🤖</span>
+          Stay curious. Stay updated. <span className="text-accent" aria-hidden="true">●</span>
         </p>
       </div>
     </footer>

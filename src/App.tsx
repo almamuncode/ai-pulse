@@ -112,7 +112,7 @@ function App() {
                       <div className="mt-10 flex justify-center">
                         <button
                           type="button"
-                          className="btn btn-primary px-6"
+                          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-primary bg-primary px-6 py-3 text-sm font-bold text-primary-content shadow-lg shadow-primary/20 transition hover:bg-primary/85"
                           onClick={() =>
                             setVisibleCount((current) => current + 9)
                           }
