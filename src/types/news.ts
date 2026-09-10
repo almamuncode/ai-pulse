@@ -6,7 +6,7 @@ export type NewsCategory =
   | "Creative";
 
 export interface News {
-  id: number;
+  id: string;
   title: string;
   summary: string;
   source: string;

@@ -6,34 +6,31 @@ import SearchBar from "./components/SearchBar";
 import CategoryFilter from "./components/CategoryFilter";
 import NewsGrid from "./components/NewsGrid";
 
-import { newsData } from "./data/news";
+import useNews from "./hooks/useNews";
 import NewsHeader from "./components/NewsHeader";
 import Footer from "./components/Footer";
+
 
 function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const { news, loading, error } = useNews();
+
 
   const filteredNews = useMemo(() => {
-    return newsData.filter((news) => {
+    return news.filter((item) => {
       const matchesSearch =
-        news.title
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        news.summary
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        news.source
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.source.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCategory =
         selectedCategory === "All" ||
-        news.category === selectedCategory;
+        item.category === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [news, searchTerm, selectedCategory]);
 
   return (
     <div className="flex min-h-screen flex-col bg-base-200">
@@ -55,11 +52,24 @@ function App() {
         </div>
 
         <section id="news" className="scroll-mt-24">
-          <NewsHeader count={filteredNews.length} />
-          <NewsGrid news={filteredNews} />
-        </section>
 
-        <NewsGrid news={filteredNews} />
+          <NewsHeader count={filteredNews.length} />
+          {loading && (
+            <div className="flex justify-center py-16">
+              <span className="loading loading-spinner loading-lg text-primary" />
+            </div>
+          )}
+
+          {error && (
+            <div className="alert alert-error mb-6">
+              <span>{error}</span>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <NewsGrid news={filteredNews} />
+          )}
+        </section>
       </main>
       <Footer />
     </div>
