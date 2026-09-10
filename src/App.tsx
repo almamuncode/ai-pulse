@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -14,6 +14,8 @@ import Footer from "./components/Footer";
 function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [visibleCount, setVisibleCount] = useState(9);
+
   const { news, loading, error } = useNews();
 
 
@@ -31,6 +33,12 @@ function App() {
       return matchesSearch && matchesCategory;
     });
   }, [news, searchTerm, selectedCategory]);
+
+  useEffect(() => {
+    setVisibleCount(9);
+  }, [searchTerm, selectedCategory]);
+
+  const visibleNews = filteredNews.slice(0, visibleCount);
 
   return (
     <div className="flex min-h-screen flex-col bg-base-200">
@@ -67,7 +75,21 @@ function App() {
           )}
 
           {!loading && !error && (
-            <NewsGrid news={filteredNews} />
+            <>
+              <NewsGrid news={visibleNews} />
+
+              {visibleCount < filteredNews.length && (
+                <div className="mt-10 flex justify-center">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setVisibleCount((current) => current + 9)}
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
       </main>
