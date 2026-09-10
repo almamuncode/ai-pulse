@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { News } from "../types/news";
+import { newsData } from "../data/news";
 
 interface UseNewsResult {
   news: News[];
@@ -24,12 +25,16 @@ function useNews(): UseNewsResult {
           throw new Error("Failed to fetch news");
         }
 
-        const data: News[] = await response.json();
+        const data: unknown = await response.json();
 
-        setNews(data);
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid news response");
+        }
+
+        setNews(data as News[]);
       } catch (error) {
-        console.error(error);
-        setError("Unable to load AI news. Please try again.");
+        console.warn("News API unavailable; using bundled news data.", error);
+        setNews(newsData);
       } finally {
         setLoading(false);
       }

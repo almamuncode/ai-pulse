@@ -2,6 +2,20 @@ import Parser from "rss-parser";
 
 const parser = new Parser();
 
+function encodeBase64Url(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
 const feeds = [
   {
     name: "OpenAI",
@@ -134,8 +148,7 @@ async function fetchFeed(feedUrl: string): Promise<string> {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36",
-      Accept:
-        "application/rss+xml, application/xml, text/xml, */*",
+      Accept: "application/rss+xml, application/xml, text/xml, */*",
     },
     signal: AbortSignal.timeout(10000),
   });
@@ -159,41 +172,31 @@ function getRssImage(item: Parser.Item): string | null {
     return item.enclosure.url;
   }
 
-  const mediaContent =
-    extendedItem["media:content"]?.$?.url;
+  const mediaContent = extendedItem["media:content"]?.$?.url;
 
   if (mediaContent) {
     return mediaContent;
   }
 
-  const mediaThumbnail =
-    extendedItem["media:thumbnail"]?.$?.url;
+  const mediaThumbnail = extendedItem["media:thumbnail"]?.$?.url;
 
   if (mediaThumbnail) {
     return mediaThumbnail;
   }
 
-  const encodedContent =
-    extendedItem["content:encoded"];
+  const encodedContent = extendedItem["content:encoded"];
 
   if (encodedContent) {
-    const imageMatch = encodedContent.match(
-      /<img[^>]+src=["']([^"']+)["']/i,
-    );
+    const imageMatch = encodedContent.match(/<img[^>]+src=["']([^"']+)["']/i);
 
     if (imageMatch?.[1]) {
       return imageMatch[1];
     }
   }
 
-  const html =
-    item.content ||
-    item.summary ||
-    "";
+  const html = item.content || item.summary || "";
 
-  const imageMatch = html.match(
-    /<img[^>]+src=["']([^"']+)["']/i,
-  );
+  const imageMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
 
   if (imageMatch?.[1]) {
     return imageMatch[1];
@@ -205,16 +208,13 @@ function getRssImage(item: Parser.Item): string | null {
 /**
  * Fetch article page and find OG image.
  */
-async function fetchArticleImage(
-  articleUrl: string,
-): Promise<string | null> {
+async function fetchArticleImage(articleUrl: string): Promise<string | null> {
   try {
     const response = await fetch(articleUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36",
-        Accept:
-          "text/html,application/xhtml+xml",
+        Accept: "text/html,application/xhtml+xml",
       },
       signal: AbortSignal.timeout(5000),
     });
@@ -240,10 +240,7 @@ async function fetchArticleImage(
 
       if (match?.[1]) {
         try {
-          return new URL(
-            match[1],
-            articleUrl,
-          ).href;
+          return new URL(match[1], articleUrl).href;
         } catch {
           return null;
         }
@@ -252,10 +249,7 @@ async function fetchArticleImage(
 
     return null;
   } catch (error) {
-    console.error(
-      `Article image failed: ${articleUrl}`,
-      error,
-    );
+    console.error(`Article image failed: ${articleUrl}`, error);
 
     return null;
   }
@@ -263,25 +257,19 @@ async function fetchArticleImage(
 
 function getFallbackImage(source: string): string {
   const fallbackImages: Record<string, string> = {
-    OpenAI:
-      "https://placehold.co/1200x630/png?text=OpenAI",
+    OpenAI: "https://placehold.co/1200x630/png?text=OpenAI",
 
-    "Google DeepMind":
-      "https://placehold.co/1200x630/png?text=Google+DeepMind",
+    "Google DeepMind": "https://placehold.co/1200x630/png?text=Google+DeepMind",
 
-    "Google AI":
-      "https://placehold.co/1200x630/png?text=Google+AI",
+    "Google AI": "https://placehold.co/1200x630/png?text=Google+AI",
 
-    "Hugging Face":
-      "https://placehold.co/1200x630/png?text=Hugging+Face",
+    "Hugging Face": "https://placehold.co/1200x630/png?text=Hugging+Face",
 
-    "arXiv AI":
-      "https://placehold.co/1200x630/png?text=AI+Research",
+    "arXiv AI": "https://placehold.co/1200x630/png?text=AI+Research",
   };
 
   return (
-    fallbackImages[source] ||
-    "https://placehold.co/1200x630/png?text=AI+Pulse"
+    fallbackImages[source] || "https://placehold.co/1200x630/png?text=AI+Pulse"
   );
 }
 
@@ -315,6 +303,46 @@ function normalizeTitle(title: string): string {
     .trim();
 }
 
+function isValidArticleUrl(url?: string): boolean {
+  if (!url) {
+    return false;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+
+    return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function createSlug(title: string): string {
+  return cleanText(title)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+function getValidDate(isoDate?: string, pubDate?: string): string {
+  const candidates = [isoDate, pubDate];
+
+  for (const date of candidates) {
+    if (!date) {
+      continue;
+    }
+
+    const timestamp = Date.parse(date);
+
+    if (!Number.isNaN(timestamp)) {
+      return new Date(timestamp).toISOString();
+    }
+  }
+
+  return "";
+}
+
 export async function GET() {
   try {
     /*
@@ -323,65 +351,44 @@ export async function GET() {
     const results = await Promise.allSettled(
       feeds.map(async (feed) => {
         try {
-          console.log(
-            `[AI Pulse] Fetching ${feed.name}`,
-          );
+          console.log(`[AI Pulse] Fetching ${feed.name}`);
 
           const xml = await fetchFeed(feed.url);
 
           const rss = await parser.parseString(xml);
 
-          console.log(
-            `[AI Pulse] ${feed.name}: ${rss.items.length} items`,
-          );
+          console.log(`[AI Pulse] ${feed.name}: ${rss.items.length} items`);
 
-          return rss.items.map(
-            (item, index): NewsItem => {
-              const title = cleanText(
-                item.title || "Untitled",
-              );
+          return rss.items
+            .filter((item) => isValidArticleUrl(item.link))
+            .map((item): NewsItem => {
+              const title = cleanText(item.title || "Untitled");
 
               const description =
-                item.contentSnippet ||
-                item.content ||
-                item.summary ||
-                "";
+                item.contentSnippet || item.content || item.summary || "";
 
               return {
-                id:
-                  item.guid ||
-                  item.link ||
-                  `${feed.name}-${index}`,
+                id: `${createSlug(title)}-${encodeBase64Url(
+                  normalizeUrl(item.link || `${feed.name}-${title}`),
+                ).slice(-8)}`,
 
                 title,
 
-                summary: createSummary(
-                  title,
-                  description,
-                  feed.name,
-                ),
+                summary: createSummary(title, description, feed.name),
 
                 source: feed.name,
 
-                date:
-                  item.isoDate ||
-                  item.pubDate ||
-                  new Date().toISOString(),
+                date: getValidDate(item.isoDate, item.pubDate),
 
                 category: feed.category,
 
-                url: item.link || "#",
+                url: item.link!,
 
-                image:
-                  getRssImage(item) || "",
+                image: getRssImage(item) || "",
               };
-            },
-          );
+            });
         } catch (error) {
-          console.error(
-            `[AI Pulse] ${feed.name} FAILED:`,
-            error,
-          );
+          console.error(`[AI Pulse] ${feed.name} FAILED:`, error);
 
           return [];
         }
@@ -393,12 +400,14 @@ export async function GET() {
      */
     const news = results
       .filter(
-        (
-          result,
-        ): result is PromiseFulfilledResult<NewsItem[]> =>
+        (result): result is PromiseFulfilledResult<NewsItem[]> =>
           result.status === "fulfilled",
       )
       .flatMap((result) => result.value);
+
+    if (news.length === 0) {
+      throw new Error("All RSS feeds failed.");
+    }
 
     /*
      * Remove duplicates.
@@ -407,25 +416,15 @@ export async function GET() {
     const seenTitles = new Set<string>();
 
     const uniqueNews = news.filter((item) => {
-      const normalizedUrl =
-        item.url !== "#"
-          ? normalizeUrl(item.url)
-          : "";
+      const normalizedUrl = normalizeUrl(item.url);
 
-      const normalizedTitle =
-        normalizeTitle(item.title);
+      const normalizedTitle = normalizeTitle(item.title);
 
-      if (
-        normalizedUrl &&
-        seenUrls.has(normalizedUrl)
-      ) {
+      if (normalizedUrl && seenUrls.has(normalizedUrl)) {
         return false;
       }
 
-      if (
-        normalizedTitle &&
-        seenTitles.has(normalizedTitle)
-      ) {
+      if (normalizedTitle && seenTitles.has(normalizedTitle)) {
         return false;
       }
 
@@ -443,11 +442,12 @@ export async function GET() {
     /*
      * Newest first.
      */
-    uniqueNews.sort(
-      (a, b) =>
-        new Date(b.date).getTime() -
-        new Date(a.date).getTime(),
-    );
+    uniqueNews.sort((a, b) => {
+  const dateA = a.date ? new Date(a.date).getTime() : 0;
+  const dateB = b.date ? new Date(b.date).getTime() : 0;
+
+  return dateB - dateA;
+});
 
     /*
      * Keep the feed mix balanced so one high-volume source cannot fill the
@@ -472,33 +472,26 @@ export async function GET() {
      */
     const finalNews = await Promise.all(
       latestNews.map(async (item) => {
-        if (item.image || item.url === "#") {
+        if (item.image) {
           return item;
         }
 
-        const articleImage =
-          await fetchArticleImage(item.url);
+        const articleImage = await fetchArticleImage(item.url);
 
         return {
           ...item,
-          image:
-            articleImage ||
-            getFallbackImage(item.source),
+          image: articleImage || getFallbackImage(item.source),
         };
       }),
     );
 
     return Response.json(finalNews, {
       headers: {
-        "Cache-Control":
-          "s-maxage=300, stale-while-revalidate=600",
+        "Cache-Control": "s-maxage=300, stale-while-revalidate=600",
       },
     });
   } catch (error) {
-    console.error(
-      "[AI Pulse] API failed:",
-      error,
-    );
+    console.error("[AI Pulse] API failed:", error);
 
     return Response.json(
       {

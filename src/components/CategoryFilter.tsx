@@ -18,19 +18,24 @@ function CategoryFilter({
 }: CategoryFilterProps) {
   return (
     <div className="flex flex-wrap gap-2">
-      {categories.map((category) => (
-        <button
-          key={category}
-          onClick={() => setSelectedCategory(category)}
-          className={`btn btn-sm ${
-            selectedCategory === category
-              ? "btn-primary"
-              : "btn-ghost"
-          }`}
-        >
-          {category}
-        </button>
-      ))}
+      {categories.map((category) => {
+        const isSelected = selectedCategory === category;
+
+        return (
+          <button
+            key={category}
+            type="button"
+            onClick={() => setSelectedCategory(category)}
+            className={`btn btn-sm rounded-full px-4 transition-all duration-200 ${
+              isSelected
+                ? "btn-primary shadow-sm"
+                : "btn-ghost border border-base-300 bg-base-100 hover:border-primary/40 hover:bg-base-100"
+            }`}
+          >
+            {category}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { News } from "../types/news";
+import { Link } from "react-router-dom";
 
 interface NewsCardProps {
   news: News;
@@ -18,7 +19,7 @@ function NewsCard({ news }: NewsCardProps) {
     <article className="card h-full overflow-hidden border border-base-300 bg-base-100 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
       {/* Image */}
       {news.image ? (
-        <figure className="h-48 bg-base-300">
+        <figure className="h-44 bg-base-300 sm:h-48">
           <img
             src={news.image}
             alt={news.title}
@@ -35,7 +36,7 @@ function NewsCard({ news }: NewsCardProps) {
       )}
 
       {/* Content */}
-      <div className="card-body">
+      <div className="card-body flex flex-col">
         {/* Meta */}
         <div className="flex items-center justify-between gap-2">
           <span className="badge badge-primary badge-sm">
@@ -58,19 +59,28 @@ function NewsCard({ news }: NewsCardProps) {
         </p>
 
         {/* Footer */}
-        <div className="card-actions mt-auto flex items-center justify-between pt-4">
+        <div className="card-actions mt-auto flex flex-col items-stretch gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-xs font-medium text-base-content/50">
             {news.source}
           </span>
 
-          <a
-            href={news.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary btn-sm"
-          >
-            Read
-          </a>
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Link
+              to={`/news/${news.id}`}
+              className="btn btn-outline btn-sm flex-1 sm:flex-none"
+            >
+              Details
+            </Link>
+
+            <a
+              href={news.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary btn-sm flex-1 sm:flex-none"
+            >
+              Read
+            </a>
+          </div>
         </div>
       </div>
     </article>
