@@ -1,8 +1,17 @@
 import type { News } from "../types/news";
 import { Link } from "react-router-dom";
+import fallbackImage from "../assets/hero.png";
 
 interface NewsCardProps {
   news: News;
+}
+
+function getImageUrl(imageUrl: string): string {
+  if (import.meta.env.DEV || !/^https?:\/\//i.test(imageUrl)) {
+    return imageUrl;
+  }
+
+  return `/api/image?url=${encodeURIComponent(imageUrl)}`;
 }
 
 function NewsCard({ news }: NewsCardProps) {
@@ -21,11 +30,12 @@ function NewsCard({ news }: NewsCardProps) {
       {news.image ? (
         <figure className="relative h-44 overflow-hidden bg-base-300 sm:h-48">
           <img
-            src={news.image}
+            src={getImageUrl(news.image)}
             alt={news.title}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             onError={(event) => {
-              event.currentTarget.style.display = "none";
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = fallbackImage;
             }}
           />
         </figure>
