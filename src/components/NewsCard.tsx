@@ -7,11 +7,7 @@ interface NewsCardProps {
 }
 
 function getImageUrl(imageUrl: string): string {
-  if (import.meta.env.DEV || !/^https?:\/\//i.test(imageUrl)) {
-    return imageUrl;
-  }
-
-  return `/api/image?url=${encodeURIComponent(imageUrl)}`;
+  return imageUrl;
 }
 
 function NewsCard({ news }: NewsCardProps) {
