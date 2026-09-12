@@ -168,19 +168,22 @@ async function fetchFeed(feedUrl: string): Promise<string> {
 function getRssImage(item: Parser.Item): string | null {
   const extendedItem = item as ExtendedItem;
 
-  if (item.enclosure?.url) {
+  const isUsableImage = (url?: string): url is string =>
+    Boolean(url && !url.includes("arxiv-logo"));
+
+  if (isUsableImage(item.enclosure?.url)) {
     return item.enclosure.url;
   }
 
   const mediaContent = extendedItem["media:content"]?.$?.url;
 
-  if (mediaContent) {
+  if (isUsableImage(mediaContent)) {
     return mediaContent;
   }
 
   const mediaThumbnail = extendedItem["media:thumbnail"]?.$?.url;
 
-  if (mediaThumbnail) {
+  if (isUsableImage(mediaThumbnail)) {
     return mediaThumbnail;
   }
 
@@ -190,7 +193,9 @@ function getRssImage(item: Parser.Item): string | null {
     const imageMatch = encodedContent.match(/<img[^>]+src=["']([^"']+)["']/i);
 
     if (imageMatch?.[1]) {
-      return imageMatch[1];
+      if (isUsableImage(imageMatch[1])) {
+        return imageMatch[1];
+      }
     }
   }
 
@@ -199,7 +204,9 @@ function getRssImage(item: Parser.Item): string | null {
   const imageMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
 
   if (imageMatch?.[1]) {
-    return imageMatch[1];
+    if (isUsableImage(imageMatch[1])) {
+      return imageMatch[1];
+    }
   }
 
   return null;
@@ -257,15 +264,16 @@ async function fetchArticleImage(articleUrl: string): Promise<string | null> {
 
 function getFallbackImage(source: string): string {
   const fallbackImages: Record<string, string> = {
-    OpenAI: "https://placehold.co/1200x630/png?text=OpenAI",
-
-    "Google DeepMind": "https://placehold.co/1200x630/png?text=Google+DeepMind",
-
-    "Google AI": "https://placehold.co/1200x630/png?text=Google+AI",
-
-    "Hugging Face": "https://placehold.co/1200x630/png?text=Hugging+Face",
-
-    "arXiv AI": "https://placehold.co/1200x630/png?text=AI+Research",
+    OpenAI:
+      "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=85",
+    "Google DeepMind":
+      "https://images.unsplash.com/photo-1535378917042-10a22c95931a?auto=format&fit=crop&w=1200&q=85",
+    "Google AI":
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=85",
+    "Hugging Face":
+      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=85",
+    "arXiv AI":
+      "https://images.unsplash.com/photo-1535378917042-10a22c95931a?auto=format&fit=crop&w=1200&q=85",
   };
 
   return (
@@ -480,7 +488,10 @@ export async function GET() {
 
         return {
           ...item,
-          image: articleImage || getFallbackImage(item.source),
+          image:
+            articleImage && !articleImage.includes("arxiv-logo")
+              ? articleImage
+              : getFallbackImage(item.source),
         };
       }),
     );

@@ -19,6 +19,11 @@ function useNews(): UseNewsResult {
         setLoading(true);
         setError(null);
 
+        if (import.meta.env.DEV) {
+          setNews(newsData);
+          return;
+        }
+
         const response = await fetch("/api/news");
 
         if (!response.ok) {
